@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <main>
+        {% if flash_messages %}
+        {% for message, type in flash_messages %}
+            {% if type == 'success' %}
+                <div class="alert alert-success" role="alert">
+                  {{ message }}
+                </div>
+            {% endif %}
+
+            {% if type == 'error' %}
+                <div class="alert alert-danger" role="alert">
+                  {{ message }}
+                </div>
+            {% endif %}
+
+            {% if type == 'info' %}
+                <div class="alert alert-info" role="alert">
+                  {{ message }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </main>
+</body>
+</html>
