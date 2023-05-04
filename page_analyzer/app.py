@@ -1,6 +1,8 @@
 # region imports
-import datetime
+from datetime import date
 import urllib.parse
+import requests
+from requests.exceptions import ConnectionError
 
 from dotenv import dotenv_values
 from flask import Flask
@@ -10,6 +12,7 @@ from flask import url_for, session
 
 from .utils.db_utils import run_cursor
 from .utils.url_utils import validate_url, create_validation_flashes
+
 # endregion
 
 
@@ -31,10 +34,13 @@ def index():
 @app.get('/urls')
 def urls():
     messages = get_flashed_messages(with_categories=True)
-    db_cursor = run_cursor('SELECT id, name '
-                           'FROM urls '
-                           'ORDER BY created_at;')
-    extant_urls = [row for row in db_cursor.fetchall()]
+    extant_urls = run_cursor('SELECT urls.id, urls.name, '
+                             'url_checks.created_at as last_check, '
+                             'url_checks.status_code '
+                             ''
+                             'FROM urls INNER JOIN '
+                             'url_checks ON urls.id = '
+                             'url_checks.url_id;').fetchall()
     return render_template('urls.html',
                            flash_messages=messages,
                            urls=extant_urls)
@@ -43,13 +49,18 @@ def urls():
 @app.get('/urls/<int:url_id>')
 def url(url_id):
     messages = get_flashed_messages(with_categories=True)
-    db_cursor = run_cursor(f'SELECT id, name, '
-                           f'created_at FROM urls '
-                           f'WHERE id={url_id};')
-    exist_url = db_cursor.fetchone()
+    url = run_cursor(f'SELECT id, name, '
+                     f'created_at FROM urls '
+                     f'WHERE id={url_id};').fetchone()
+
+    checks = run_cursor(f'SELECT id, status_code, h1, '
+                        f'title, description, '
+                        f'created_at FROM url_checks '
+                        f'WHERE url_id={url_id};').fetchall()
     return render_template('url.html',
                            flash_messages=messages,
-                           url=exist_url)
+                           url=url,
+                           url_checks=checks)
 
 
 @app.post('/urls')
@@ -63,17 +74,33 @@ def add_url():
                            f"WHERE name = '{short_url}';").fetchone()
     if exist_row:
         flash('info', 'Страница уже существует')
-        return redirect(f'urls/{exist_row["id"]}')
-
-    if not validate_url(url):
+        id = exist_row['id']
+    elif not validate_url(url):
         create_validation_flashes(url)
         session['URL'] = url
         return redirect(url_for('index'))
+    else:
+        cursor = run_cursor(f"INSERT INTO urls (name, created_at) "
+                            f"VALUES ('{short_url}', '{date.today()}') "
+                            f"RETURNING id;")
+        id = cursor.fetchone()['id']
+        flash('success', 'Url добавлен в базу данных.')
 
-    db_cursor = run_cursor(f"INSERT INTO urls (name, created_at) "
-                           f"VALUES ('{short_url}', '{datetime.date.today()}') "
-                           f"RETURNING id;")
+    return redirect(url_for("url", url_id=id))
 
-    id = db_cursor.fetchone()['id']
-    flash('success', 'Url добавлен в базу данных.')
-    return redirect(f'{url_for("urls")}/{id}')
+
+@app.post('/urls/<int:url_id>/checks')
+def add_check(url_id):
+    url = run_cursor(f'SELECT * '
+                     f'FROM urls '
+                     f'WHERE id={url_id};').fetchone()
+    try:
+        request_sender = requests.get(url['name'])
+    except ConnectionError:
+        flash('error', 'Произошла ошибка при проверке.')
+        return redirect(url_for("url", url_id=url_id))
+
+    code = request_sender.status_code
+    run_cursor(f"INSERT INTO url_checks (url_id, created_at, status_code) "
+               f"VALUES ({url_id}, '{date.today()}', '{code}');")
+    return redirect(url_for("url", url_id=url_id))
