@@ -37,10 +37,9 @@ def urls():
     extant_urls = run_cursor('SELECT urls.id, urls.name, '
                              'url_checks.created_at as last_check, '
                              'url_checks.status_code '
-                             ''
                              'FROM urls INNER JOIN '
-                             'url_checks ON urls.id = '
-                             'url_checks.url_id;').fetchall()
+                             'url_checks ON urls.id = url_checks.url_id;'
+                             ).fetchall()
     return render_template('urls.html',
                            flash_messages=messages,
                            urls=extant_urls)
@@ -51,12 +50,15 @@ def url(url_id):
     messages = get_flashed_messages(with_categories=True)
     url = run_cursor(f'SELECT id, name, '
                      f'created_at FROM urls '
-                     f'WHERE id={url_id};').fetchone()
+                     f'WHERE id={url_id};'
+                     ).fetchone()
 
     checks = run_cursor(f'SELECT id, status_code, h1, '
                         f'title, description, '
                         f'created_at FROM url_checks '
-                        f'WHERE url_id={url_id};').fetchall()
+                        f'WHERE url_id={url_id};'
+                        ).fetchall()
+
     return render_template('url.html',
                            flash_messages=messages,
                            url=url,
@@ -69,8 +71,7 @@ def add_url():
     url_parts = urllib.parse.urlparse(url)
     short_url = f'{url_parts.scheme}://{url_parts.netloc}'
 
-    exist_row = run_cursor(f"SELECT id "
-                           f"FROM urls "
+    exist_row = run_cursor(f"SELECT id FROM urls "
                            f"WHERE name = '{short_url}';").fetchone()
     if exist_row:
         flash('info', 'Страница уже существует')
@@ -80,8 +81,8 @@ def add_url():
         session['URL'] = url
         return redirect(url_for('index'))
     else:
-        cursor = run_cursor(f"INSERT INTO urls (name, created_at) "
-                            f"VALUES ('{short_url}', '{date.today()}') "
+        cursor = run_cursor(f"INSERT INTO urls(name, created_at) "
+                            f"VALUES('{short_url}', '{date.today()}') "
                             f"RETURNING id;")
         id = cursor.fetchone()['id']
         flash('success', 'Url добавлен в базу данных.')
@@ -91,16 +92,12 @@ def add_url():
 
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
-    url = run_cursor(f'SELECT * '
-                     f'FROM urls '
-                     f'WHERE id={url_id};').fetchone()
+    url = run_cursor(f'SELECT * FROM urls WHERE id={url_id};').fetchone()
     try:
         request_sender = requests.get(url['name'])
+        code = request_sender.status_code
+        run_cursor(f"INSERT INTO url_checks (url_id, created_at, status_code) "
+                   f"VALUES ({url_id}, '{date.today()}', '{code}');")
     except ConnectionError:
         flash('error', 'Произошла ошибка при проверке.')
-        return redirect(url_for("url", url_id=url_id))
-
-    code = request_sender.status_code
-    run_cursor(f"INSERT INTO url_checks (url_id, created_at, status_code) "
-               f"VALUES ({url_id}, '{date.today()}', '{code}');")
     return redirect(url_for("url", url_id=url_id))
