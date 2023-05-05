@@ -1,8 +1,9 @@
 # region imports
+import os
 from datetime import date
 from urllib.parse import urlparse
 
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 from flask import Flask
 from flask import flash, get_flashed_messages
 from flask import render_template, redirect, request
@@ -17,9 +18,12 @@ from .utils.url_utils import create_validation_flashes, get_url
 
 # endregion
 
-
+load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY')
+DATABASE_URL = os.getenv('DATABASE_URL')
 app = Flask(__name__)
-app.secret_key = dotenv_values('.env').get('SECRET_KEY')
+app.config.update(SECRET_KEY=SECRET_KEY,
+                  DATABASE_URL=DATABASE_URL)
 
 
 @app.route('/')
