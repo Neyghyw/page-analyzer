@@ -89,7 +89,7 @@ def add_url():
 
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
-    url = get_url(f"id={url_id}'")
+    url = get_url(f"id={url_id}")
     request = send_request(url['name'])
     if request:
         check = {
