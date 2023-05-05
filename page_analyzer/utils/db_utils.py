@@ -1,8 +1,11 @@
-from dotenv import dotenv_values
+import os
+
+from dotenv import load_dotenv
 import psycopg2
 from psycopg2 import extras
 
-DATABASE_URL = dotenv_values('.env').get('DATABASE_URL')
+load_dotenv()
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def run_cursor(query_string: str):

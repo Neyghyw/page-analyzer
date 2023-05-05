@@ -19,6 +19,6 @@ def parse_markup(markup):
         parts['title'] = soup.title.text
     if meta:
         parts['description'] = meta.get('content')
-    if soup.h1:
+    if soup.h1.text:
         parts['h1'] = soup.h1.text
     return parts

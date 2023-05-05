@@ -99,5 +99,7 @@ def add_check(url_id):
         }
         check.update(parse_markup(request.text))
         fields, values = create_fields_and_values(check)
+        print(check)
+        print(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
         run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
     return redirect(url_for("url", url_id=url_id))
