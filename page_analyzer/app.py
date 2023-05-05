@@ -9,7 +9,9 @@ from flask import render_template, redirect, request
 from flask import url_for, session
 from validators.url import url as validate
 
-from .utils.db_utils import run_cursor, create_fields_and_values, handle_none_values
+from .utils.db_utils import run_cursor, \
+    create_fields_and_values, \
+    handle_none_values
 from .utils.parse_utils import parse_markup, send_request
 from .utils.url_utils import create_validation_flashes, get_url
 
