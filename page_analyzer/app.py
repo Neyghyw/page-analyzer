@@ -1,8 +1,6 @@
 # region imports
-from datetime import date
 import urllib.parse
-import requests
-from requests.exceptions import ConnectionError
+from datetime import date
 
 from dotenv import dotenv_values
 from flask import Flask
@@ -10,9 +8,9 @@ from flask import flash, get_flashed_messages
 from flask import render_template, redirect, request
 from flask import url_for, session
 
-from .utils.db_utils import run_cursor
+from .utils.parse_utils import get_title_description_h1, send_request
+from .utils.db_utils import run_cursor, get_fields_and_values
 from .utils.url_utils import validate_url, create_validation_flashes
-
 # endregion
 
 
@@ -93,11 +91,12 @@ def add_url():
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
     url = run_cursor(f'SELECT * FROM urls WHERE id={url_id};').fetchone()
-    try:
-        request_sender = requests.get(url['name'])
-        code = request_sender.status_code
-        run_cursor(f"INSERT INTO url_checks (url_id, created_at, status_code) "
-                   f"VALUES ({url_id}, '{date.today()}', '{code}');")
-    except ConnectionError:
-        flash('error', 'Произошла ошибка при проверке.')
+    request = send_request(url['name'])
+    if request:
+        additional_parts = get_title_description_h1(request.text)
+        fields, values = get_fields_and_values(additional_parts)
+        run_cursor(f"INSERT INTO url_checks "
+                   f"(url_id, created_at, status_code, {fields}) "
+                   f"VALUES ({url_id}, '{date.today()}', "
+                   f"'{request.status_code}', {values});")
     return redirect(url_for("url", url_id=url_id))
