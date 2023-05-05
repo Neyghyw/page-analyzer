@@ -1,22 +1,23 @@
 # region imports
-import urllib.parse
 from datetime import date
+from urllib.parse import urlparse
 
 from dotenv import dotenv_values
 from flask import Flask
 from flask import flash, get_flashed_messages
 from flask import render_template, redirect, request
 from flask import url_for, session
+from validators.url import url as validate
 
-from .utils.parse_utils import get_title_description_h1, send_request
-from .utils.db_utils import run_cursor, get_fields_and_values
-from .utils.url_utils import validate_url, create_validation_flashes
+from .utils.db_utils import run_cursor, create_fields_and_values, handle_none_values
+from .utils.parse_utils import parse_markup, send_request
+from .utils.url_utils import create_validation_flashes, get_url
+
 # endregion
 
 
-SECRET_KEY = dotenv_values('.env').get('SECRET_KEY')
 app = Flask(__name__)
-app.secret_key = SECRET_KEY
+app.secret_key = dotenv_values('.env').get('SECRET_KEY')
 
 
 @app.route('/')
@@ -32,31 +33,26 @@ def index():
 @app.get('/urls')
 def urls():
     messages = get_flashed_messages(with_categories=True)
-    extant_urls = run_cursor('SELECT urls.id, urls.name, '
-                             'url_checks.created_at as last_check, '
-                             'url_checks.status_code '
-                             'FROM urls INNER JOIN '
-                             'url_checks ON urls.id = url_checks.url_id;'
-                             ).fetchall()
+    urls = run_cursor('SELECT urls.id, urls.name, '
+                      'url_checks.created_at as last_check, '
+                      'url_checks.status_code '
+                      'FROM urls INNER JOIN '
+                      'url_checks ON urls.id = url_checks.url_id;'
+                      ).fetchall()
+    urls = [handle_none_values(url) for url in urls]
     return render_template('urls.html',
                            flash_messages=messages,
-                           urls=extant_urls)
+                           urls=urls)
 
 
 @app.get('/urls/<int:url_id>')
 def url(url_id):
     messages = get_flashed_messages(with_categories=True)
-    url = run_cursor(f'SELECT id, name, '
-                     f'created_at FROM urls '
-                     f'WHERE id={url_id};'
-                     ).fetchone()
-
-    checks = run_cursor(f'SELECT id, status_code, h1, '
-                        f'title, description, '
-                        f'created_at FROM url_checks '
+    url = get_url(f'id={url_id}')
+    checks = run_cursor(f'SELECT * FROM url_checks '
                         f'WHERE url_id={url_id};'
                         ).fetchall()
-
+    checks = [handle_none_values(check) for check in checks]
     return render_template('url.html',
                            flash_messages=messages,
                            url=url,
@@ -66,37 +62,36 @@ def url(url_id):
 @app.post('/urls')
 def add_url():
     url = request.form.get('url')
-    url_parts = urllib.parse.urlparse(url)
-    short_url = f'{url_parts.scheme}://{url_parts.netloc}'
-
-    exist_row = run_cursor(f"SELECT id FROM urls "
-                           f"WHERE name = '{short_url}';").fetchone()
-    if exist_row:
+    parts = urlparse(url)
+    short_url = f'{parts.scheme}://{parts.netloc}'
+    exist_url = get_url(f"name='{short_url}'")
+    if exist_url:
         flash('info', 'Страница уже существует')
-        id = exist_row['id']
-    elif not validate_url(url):
+        url_id = exist_url['id']
+    elif not validate(url):
         create_validation_flashes(url)
         session['URL'] = url
-        return redirect(url_for('index'))
+        return redirect(url_for("index"))
     else:
-        cursor = run_cursor(f"INSERT INTO urls(name, created_at) "
-                            f"VALUES('{short_url}', '{date.today()}') "
-                            f"RETURNING id;")
-        id = cursor.fetchone()['id']
-        flash('success', 'Url добавлен в базу данных.')
-
-    return redirect(url_for("url", url_id=id))
+        new_url = run_cursor(f"INSERT INTO urls(name, created_at) "
+                             f"VALUES('{short_url}', '{date.today()}')"
+                             f"RETURNING *;").fetchone()
+        url_id = new_url['id']
+        flash('success', 'URL добавлен в базу данных.')
+    return redirect(url_for("url", url_id=url_id))
 
 
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
-    url = run_cursor(f'SELECT * FROM urls WHERE id={url_id};').fetchone()
+    url = get_url(f"id={url_id}'")
     request = send_request(url['name'])
     if request:
-        additional_parts = get_title_description_h1(request.text)
-        fields, values = get_fields_and_values(additional_parts)
-        run_cursor(f"INSERT INTO url_checks "
-                   f"(url_id, created_at, status_code, {fields}) "
-                   f"VALUES ({url_id}, '{date.today()}', "
-                   f"'{request.status_code}', {values});")
+        check = {
+            'url_id': url_id,
+            'created_at': date.today(),
+            'status_code': request.status_code
+        }
+        check.update(parse_markup(request.text))
+        fields, values = create_fields_and_values(check)
+        run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
     return redirect(url_for("url", url_id=url_id))

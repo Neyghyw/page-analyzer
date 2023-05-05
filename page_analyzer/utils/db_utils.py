@@ -12,12 +12,19 @@ def run_cursor(query_string: str):
         return cursor
 
 
-def get_fields_and_values(parts):
-    fields = str.join(', ', [f'{key}' for key
-                             in parts.keys()
-                             if key])
+def create_fields_and_values(_object: dict):
+    columns = str.join(', ', [f'{key}' for key
+                              in _object.keys()
+                              if key])
 
-    values = str.join(', ', [f"'{value}'" for value
-                             in parts.values()
+    values = str.join(', ', [f"$${value}$$" for value
+                             in _object.values()
                              if value])
-    return fields, values
+    return columns, values
+
+
+def handle_none_values(row):
+    for key, value in row.items():
+        if value is None:
+            row[key] = ''
+    return row

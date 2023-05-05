@@ -11,13 +11,13 @@ def send_request(url):
         flash('error', 'Произошла ошибка при проверке.')
 
 
-def get_title_description_h1(markup):
+def parse_markup(markup):
     soup = BeautifulSoup(markup, 'html.parser')
     parts = dict()
     meta = soup.head.find('meta', {'name': 'description'})
     if soup.title:
         parts['title'] = soup.title.text
-    if meta.get('content'):
+    if meta:
         parts['description'] = meta.get('content')
     if soup.h1:
         parts['h1'] = soup.h1.text

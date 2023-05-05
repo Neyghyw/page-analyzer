@@ -1,11 +1,13 @@
 from flask import flash
-from validators.url import url as validate
+
+from page_analyzer.utils.db_utils import run_cursor
 
 
-def validate_url(url: str):
-    if not url or len(url) > 255 or not validate(url):
-        return False
-    return True
+def get_url(condition):
+    url = run_cursor(f"SELECT * FROM urls "
+                     f"WHERE ({condition});"
+                     ).fetchone()
+    return url
 
 
 def create_validation_flashes(url: str):
