@@ -100,4 +100,5 @@ def add_check(url_id):
         check.update(parse_markup(request.text))
         fields, values = create_fields_and_values(check)
         run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
+        flash('success', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))
