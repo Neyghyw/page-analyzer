@@ -8,7 +8,7 @@ def send_request(url):
         request = requests.get(url)
         return request
     except ConnectionError:
-        flash('error', 'Произошла ошибка при проверке.')
+        flash('error', 'Произошла ошибка при проверке')
 
 
 def parse_markup(markup):
