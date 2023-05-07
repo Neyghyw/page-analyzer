@@ -3,6 +3,7 @@ import os
 from datetime import date
 from urllib.parse import urlparse
 
+import requests
 from dotenv import load_dotenv
 from flask import Flask, abort
 from flask import flash, get_flashed_messages
@@ -95,15 +96,19 @@ def add_url():
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
     url = get_url(f"id={url_id}")
-    request = send_request(url['name'])
-    if request:
-        check = {
-            'url_id': url_id,
-            'created_at': date.today(),
-            'status_code': request.status_code
-        }
-        check.update(parse_markup(request.text))
-        fields, values = create_fields_and_values(check)
-        run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
-        flash('success', 'Страница успешно проверена')
+    try:
+        request = requests.get(url['name'])
+        request.raise_for_status()
+    except requests.exceptions.RequestException:
+        flash('error', 'Произошла ошибка при проверке')
+        return redirect(url_for("url", url_id=url_id))
+    check = {
+        'url_id': url_id,
+        'created_at': date.today(),
+        'status_code': request.status_code
+    }
+    check.update(parse_markup(request.text))
+    fields, values = create_fields_and_values(check)
+    run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
+    flash('success', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))

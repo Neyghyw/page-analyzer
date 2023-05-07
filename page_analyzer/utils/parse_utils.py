@@ -1,14 +1,4 @@
-import requests
 from bs4 import BeautifulSoup
-from flask import flash
-
-
-def send_request(url):
-    try:
-        request = requests.get(url)
-        request.raise_for_status()
-    except requests.exceptions.RequestException:
-        flash('error', 'Произошла ошибка при проверке')
 
 
 def parse_markup(markup):
