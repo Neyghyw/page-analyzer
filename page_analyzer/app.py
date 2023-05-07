@@ -1,15 +1,19 @@
 # region imports
+import os
 from datetime import date
 from urllib.parse import urlparse
 
 import requests
-from flask import Flask, get_flashed_messages
+from dotenv import load_dotenv
+from flask import Flask, get_flashed_messages, flash
 from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
 
-from .utils.db_utils import *
-from .utils.parse_utils import *
-from .utils.url_utils import *
+from .utils.db_utils import run_cursor,\
+    handle_none_values,\
+    create_fields_and_values
+from .utils.parse_utils import parse_markup
+from .utils.url_utils import get_url, create_validation_flashes
 # endregion
 
 load_dotenv()
