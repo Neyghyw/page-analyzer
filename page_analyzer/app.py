@@ -100,5 +100,5 @@ def add_check(url_id):
 @app.errorhandler(422)
 def unprocessable_entity(error):
     messages = get_flashed_messages(with_categories=True)
-    url = error['url']
+    url = error.description['url']
     return render_template('index.html', flash_messages=messages, url=url), 422
