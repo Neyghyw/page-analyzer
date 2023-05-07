@@ -28,8 +28,7 @@ app.config.update(SECRET_KEY=SECRET_KEY,
 
 @app.route('/')
 def index():
-    messages = get_flashed_messages(with_categories=True)
-    return render_template('index.html', flash_messages=messages)
+    return render_template('index.html')
 
 
 @app.errorhandler(422)

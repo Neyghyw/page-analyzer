@@ -5,7 +5,7 @@ from flask import flash, redirect, url_for
 
 def send_request(url):
     try:
-        request = requests.get(url)
+        request = requests.get(url['name'])
         return request
     except requests.exceptions.ConnectionError:
         flash('error', 'Произошла ошибка при проверке')
