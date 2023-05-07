@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from flask import flash
+from flask import flash, redirect, url_for
 
 
 def send_request(url):
@@ -9,6 +9,7 @@ def send_request(url):
         return request
     except requests.exceptions.ConnectionError:
         flash('error', 'Произошла ошибка при проверке')
+        return redirect(url_for("url", url_id=url['id']))
 
 
 def parse_markup(markup):
