@@ -4,7 +4,7 @@ from datetime import date
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, abort
 from flask import flash, get_flashed_messages
 from flask import render_template, redirect, request
 from flask import url_for, session
@@ -29,11 +29,17 @@ app.config.update(SECRET_KEY=SECRET_KEY,
 @app.route('/')
 def index():
     messages = get_flashed_messages(with_categories=True)
-    entered_url = session.get('URL', '')
+    return render_template('index.html', flash_messages=messages)
+
+
+@app.errorhandler(422)
+def invalid_url(error):
+    messages = get_flashed_messages(with_categories=True)
+    bad_url = session.get('URL', '')
     session.clear()
     return render_template('index.html',
                            flash_messages=messages,
-                           url=entered_url)
+                           url=bad_url), 422
 
 
 @app.get('/urls')
@@ -71,13 +77,14 @@ def add_url():
     parts = urlparse(url)
     short_url = f'{parts.scheme}://{parts.netloc}'
     exist_url = get_url(f"name='{short_url}'")
-    if exist_url:
-        flash('info', 'Страница уже существует')
-        url_id = exist_url['id']
-    elif not validate(url):
+
+    if not validate(url):
         create_validation_flashes(url)
         session['URL'] = url
-        return redirect(url_for("index"))
+        abort(422)
+    if exist_url:
+        url_id = exist_url['id']
+        flash('info', 'Страница уже существует')
     else:
         new_url = run_cursor(f"INSERT INTO urls(name, created_at) "
                              f"VALUES('{short_url}', '{date.today()}')"

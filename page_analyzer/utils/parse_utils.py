@@ -7,7 +7,7 @@ def send_request(url):
     try:
         request = requests.get(url)
         return request
-    except ConnectionError:
+    except requests.exceptions.ConnectionError:
         flash('error', 'Произошла ошибка при проверке')
 
 
