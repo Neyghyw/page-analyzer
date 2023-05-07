@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
 </head>
 <body>
-    <main>
         {% if flash_messages %}
         {% for message, type in flash_messages %}
             {% if type == 'success' %}
@@ -27,6 +24,5 @@
             {% endif %}
         {% endfor %}
     {% endif %}
-    </main>
 </body>
 </html>
