@@ -14,7 +14,7 @@ from validators.url import url as validate
 from .utils.db_utils import run_cursor, \
     create_fields_and_values, \
     handle_none_values
-from .utils.parse_utils import parse_markup, send_request
+from .utils.parse_utils import parse_markup
 from .utils.url_utils import create_validation_flashes, get_url
 
 # endregion
@@ -100,7 +100,6 @@ def add_check(url_id):
     try:
         request = requests.get(url['name'])
     except requests.exceptions.RequestException as e:
-        print(e)
         flash('error', 'Произошла ошибка при проверке')
         return redirect(url_for("url", url_id=url_id))
     check = {
