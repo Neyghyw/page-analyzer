@@ -1,4 +1,3 @@
-# region imports
 import os
 from datetime import date
 from urllib.parse import urlparse
@@ -14,7 +13,6 @@ from .utils.db_utils import run_cursor,\
     create_fields_and_values
 from .utils.parse_utils import parse_markup
 from .utils.url_utils import get_url, create_validation_flashes
-# endregion
 
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -84,6 +82,7 @@ def add_check(url_id):
     url = get_url(f"id={url_id}")
     try:
         request = requests.get(url['name'])
+        request.raise_for_status()
     except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
         return redirect(url_for("url", url_id=url_id))
