@@ -98,8 +98,9 @@ def add_url():
 def add_check(url_id):
     url = get_url(f"id={url_id}")
     try:
-        request = requests.get(url)
-    except requests.exceptions.RequestException:
+        request = requests.get(url['name'])
+    except requests.exceptions.RequestException as e:
+        print(e)
         flash('error', 'Произошла ошибка при проверке')
         return redirect(url_for("url", url_id=url_id))
     check = {
