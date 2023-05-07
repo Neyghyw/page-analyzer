@@ -16,4 +16,4 @@ def create_validation_flashes(url: str):
     elif len(url) > 255:
         flash('error', 'Длина URL должна быть не более 255 символов.')
     else:
-        flash('error', 'URL не существует.')
+        flash('error', 'Некорректный URL')
