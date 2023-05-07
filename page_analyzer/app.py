@@ -1,22 +1,15 @@
 # region imports
-import os
 from datetime import date
 from urllib.parse import urlparse
 
 import requests
-from dotenv import load_dotenv
-from flask import Flask, abort
-from flask import flash, get_flashed_messages
-from flask import render_template, redirect, request
-from flask import url_for, session
+from flask import Flask, get_flashed_messages
+from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
 
-from .utils.db_utils import run_cursor, \
-    create_fields_and_values, \
-    handle_none_values
-from .utils.parse_utils import parse_markup
-from .utils.url_utils import create_validation_flashes, get_url
-
+from .utils.db_utils import *
+from .utils.parse_utils import *
+from .utils.url_utils import *
 # endregion
 
 load_dotenv()
@@ -30,15 +23,6 @@ app.config.update(SECRET_KEY=SECRET_KEY,
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.errorhandler(422)
-def invalid_url(error):
-    messages = get_flashed_messages(with_categories=True)
-    bad_url = session.get('URL', '')
-    session.clear()
-    return render_template('index.html',
-                           flash_messages=messages, url=bad_url), 422
 
 
 @app.get('/urls')
@@ -76,11 +60,9 @@ def add_url():
     parts = urlparse(url)
     short_url = f'{parts.scheme}://{parts.netloc}'
     exist_url = get_url(f"name='{short_url}'")
-
     if not validate(url):
         create_validation_flashes(url)
-        session['URL'] = url
-        abort(422)
+        abort(422, {'url': url})
     if exist_url:
         url_id = exist_url['id']
         flash('info', 'Страница уже существует')
@@ -98,17 +80,22 @@ def add_check(url_id):
     url = get_url(f"id={url_id}")
     try:
         request = requests.get(url['name'])
-        request.raise_for_status()
     except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
         return redirect(url_for("url", url_id=url_id))
-    check = {
-        'url_id': url_id,
-        'created_at': date.today(),
-        'status_code': request.status_code
-    }
+    check = {'url_id': url_id,
+             'created_at': date.today(),
+             'status_code': request.status_code
+             }
     check.update(parse_markup(request.text))
     fields, values = create_fields_and_values(check)
     run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
     flash('success', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))
+
+
+@app.errorhandler(422)
+def unprocessable_entity(error):
+    messages = get_flashed_messages(with_categories=True)
+    url = error['url']
+    return render_template('index.html', flash_messages=messages, url=url), 422
