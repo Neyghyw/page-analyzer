@@ -1,16 +1,18 @@
-# region imports
+import os
 from datetime import date
 from urllib.parse import urlparse
 
 import requests
-from flask import Flask, get_flashed_messages
+from dotenv import load_dotenv
+from flask import Flask, get_flashed_messages, flash
 from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
 
-from .utils.db_utils import *
-from .utils.parse_utils import *
-from .utils.url_utils import *
-# endregion
+from .utils.db_utils import run_cursor,\
+    handle_none_values,\
+    create_fields_and_values
+from .utils.parse_utils import parse_markup
+from .utils.url_utils import get_url, create_validation_flashes
 
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -80,6 +82,7 @@ def add_check(url_id):
     url = get_url(f"id={url_id}")
     try:
         request = requests.get(url['name'])
+        request.raise_for_status()
     except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
         return redirect(url_for("url", url_id=url_id))
@@ -97,5 +100,5 @@ def add_check(url_id):
 @app.errorhandler(422)
 def unprocessable_entity(error):
     messages = get_flashed_messages(with_categories=True)
-    url = error['url']
+    url = error.description['url']
     return render_template('index.html', flash_messages=messages, url=url), 422
