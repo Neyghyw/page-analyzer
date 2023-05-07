@@ -10,6 +10,7 @@ def send_request(url):
     except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
 
+
 def parse_markup(markup):
     soup = BeautifulSoup(markup, 'html.parser')
     parts = dict()
