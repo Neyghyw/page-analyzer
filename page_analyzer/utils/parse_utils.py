@@ -1,16 +1,14 @@
 import requests
 from bs4 import BeautifulSoup
-from flask import flash, redirect, url_for
+from flask import flash
 
 
 def send_request(url):
     try:
-        request = requests.get(url['name'])
+        request = requests.get(url)
         return request
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
-        return redirect(url_for("url", url_id=url['id']))
-
 
 def parse_markup(markup):
     soup = BeautifulSoup(markup, 'html.parser')
