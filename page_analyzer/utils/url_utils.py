@@ -1,7 +1,6 @@
 import requests
+from bs4 import BeautifulSoup
 from flask import flash
-
-from page_analyzer.utils.db_utils import run_cursor
 
 
 def run_request(url):
@@ -9,21 +8,27 @@ def run_request(url):
         request = requests.get(url)
         request.raise_for_status()
         return request
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
 
 
-def get_url(condition):
-    url = run_cursor(f"SELECT * FROM urls "
-                     f"WHERE ({condition});"
-                     ).fetchone()
-    return url
-
-
-def create_validation_flashes(url: str):
+def flash_url_errors(url: str):
     if not url:
         flash('error', 'URL обязателен.')
     elif len(url) > 255:
         flash('error', 'Длина URL должна быть не более 255 символов.')
     else:
         flash('error', 'Некорректный URL')
+
+
+def parse_markup(markup):
+    soup = BeautifulSoup(markup, 'html.parser')
+    parts = dict()
+    meta = soup.head.find('meta', {'name': 'description'})
+    if soup.title:
+        parts['title'] = soup.title.text
+    if meta:
+        parts['description'] = meta.get('content')
+    if soup.h1.text:
+        parts['h1'] = soup.h1.text
+    return parts
