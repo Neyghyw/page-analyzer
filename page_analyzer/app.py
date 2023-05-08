@@ -63,8 +63,8 @@ def add_url():
         flash_url_errors(url)
         abort(422, {'url': url})
     if exist_url:
-        url_id = exist_url['id']
         flash('info', 'Страница уже существует')
+        url_id = exist_url['id']
     else:
         new_url = insert_url(formatted_url, date.today(), get_conn())
         url_id = new_url['id']
