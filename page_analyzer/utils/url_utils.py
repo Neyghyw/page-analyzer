@@ -4,6 +4,7 @@ from flask import flash
 
 URL_LENGTH = 255
 
+
 def run_request(url):
     try:
         request = requests.get(url)
