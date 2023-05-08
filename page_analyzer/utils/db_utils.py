@@ -19,11 +19,9 @@ def run_cursor(query_string: str, connection, fetch='one'):
 
 
 def get_urls(connection):
-    query_str = 'SELECT urls.id, urls.name, '
-    'url_checks.created_at as last_check, '
-    'url_checks.status_code '
-    'FROM urls INNER JOIN '
-    'url_checks ON urls.id = url_checks.url_id;'
+    query_str = 'SELECT urls.id, urls.name, url_checks.created_at as last_check, ' \
+                'url_checks.status_code FROM urls ' \
+                'INNER JOIN url_checks ON urls.id = url_checks.url_id;'
     urls = run_cursor(query_str, connection, 'all')
     urls = [handle_none_values(url) for url in urls]
     return urls
