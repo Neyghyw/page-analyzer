@@ -23,6 +23,7 @@ app.config.update(SECRET_KEY=SECRET_KEY,
 def get_conn():
     if not hasattr(g, 'db_connect'):
         g.db_connect = psycopg2.connect(DATABASE_URL)
+        g.db_connect.autocommit = True
     return g.db_connect
 
 
@@ -47,7 +48,7 @@ def urls():
 @app.get('/urls/<int:url_id>')
 def url(url_id):
     messages = get_flashed_messages(with_categories=True)
-    url = get_url(f'id={url_id}', get_conn())
+    url = get_url("id=%s", url_id, get_conn())
     checks = get_checks(url_id, get_conn())
     return render_template('url.html', flash_messages=messages, url=url,
                            url_checks=checks)
@@ -58,7 +59,7 @@ def add_url():
     url = request.form.get('url')
     parts = urlparse(url)
     formatted_url = f'{parts.scheme}://{parts.netloc}'
-    exist_url = get_url(f"name='{formatted_url}'", get_conn())
+    exist_url = get_url("name=%s", formatted_url, get_conn())
     if not validate(url):
         flash_url_errors(url)
         abort(422, {'url': url})
@@ -74,7 +75,7 @@ def add_url():
 
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
-    url = get_url(f"id={url_id}", get_conn())
+    url = get_url("id=%s", url_id, get_conn())
     request = run_request(url['name'])
     if request:
         check = {'url_id': url_id, 'created_at': date.today(),

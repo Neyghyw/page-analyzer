@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from flask import flash
 
+URL_LENGTH = 255
+
 
 def run_request(url):
     try:
@@ -15,8 +17,8 @@ def run_request(url):
 def flash_url_errors(url: str):
     if not url:
         flash('error', 'URL обязателен.')
-    elif len(url) > 255:
-        flash('error', 'Длина URL должна быть не более 255 символов.')
+    elif len(url) > URL_LENGTH:
+        flash('error', f'Длина URL должна быть не более {URL_LENGTH} символов.')
     else:
         flash('error', 'Некорректный URL')
 
@@ -29,6 +31,6 @@ def parse_markup(markup):
         parts['title'] = soup.title.text
     if meta:
         parts['description'] = meta.get('content')
-    if soup.h1.text:
+    if soup.h1:
         parts['h1'] = soup.h1.text
     return parts
