@@ -2,17 +2,16 @@ import os
 from datetime import date
 from urllib.parse import urlparse
 
-import requests
 from dotenv import load_dotenv
 from flask import Flask, get_flashed_messages, flash
 from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
 
-from .utils.db_utils import run_cursor,\
-    handle_none_values,\
+from .utils.db_utils import run_cursor, \
+    handle_none_values, \
     create_fields_and_values
 from .utils.parse_utils import parse_markup
-from .utils.url_utils import get_url, create_validation_flashes
+from .utils.url_utils import get_url, create_validation_flashes, run_request
 
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -80,20 +79,16 @@ def add_url():
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
     url = get_url(f"id={url_id}")
-    try:
-        request = requests.get(url['name'])
-        request.raise_for_status()
-    except requests.exceptions.RequestException:
-        flash('error', 'Произошла ошибка при проверке')
-        return redirect(url_for("url", url_id=url_id))
-    check = {'url_id': url_id,
-             'created_at': date.today(),
-             'status_code': request.status_code
-             }
-    check.update(parse_markup(request.text))
-    fields, values = create_fields_and_values(check)
-    run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
-    flash('success', 'Страница успешно проверена')
+    request = run_request(url['name'])
+    if request:
+        check = {'url_id': url_id,
+                 'created_at': date.today(),
+                 'status_code': request.status_code
+                 }
+        check.update(parse_markup(request.text))
+        fields, values = create_fields_and_values(check)
+        run_cursor(f"INSERT INTO url_checks ({fields}) VALUES ({values});")
+        flash('success', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))
 
 
