@@ -6,11 +6,11 @@ from page_analyzer.utils.db_utils import run_cursor
 
 def run_request(url):
     try:
-        request = requests.get(url['name'])
+        request = requests.get(url)
         request.raise_for_status()
-    except requests.exceptions.RequestException:
+        return request
+    except requests.exceptions.RequestException as e:
         flash('error', 'Произошла ошибка при проверке')
-        return None
 
 
 def get_url(condition):
