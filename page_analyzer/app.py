@@ -1,15 +1,13 @@
 import os
-from datetime import date
-from urllib.parse import urlparse
-
 import psycopg2
 from dotenv import load_dotenv
-from flask import Flask, get_flashed_messages, \
-    flash, g, render_template, redirect, request, url_for, abort
+from datetime import date
+from urllib.parse import urlparse
+from flask import Flask, g, get_flashed_messages, flash
+from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
-
-from .utils.db_utils import get_urls, get_url, insert_url, \
-    get_checks, insert_check
+from .utils.db_utils import get_urls, get_url, insert_url
+from .utils.db_utils import get_checks, insert_check
 from .utils.url_utils import flash_url_errors, run_request, parse_markup
 
 load_dotenv()
@@ -59,7 +57,8 @@ def add_url():
     url = request.form.get('url')
     parts = urlparse(url)
     formatted_url = f'{parts.scheme}://{parts.netloc}'
-    exist_url = get_url("name=%s", formatted_url, get_conn())
+    query_params = ("name=%s", (formatted_url,))
+    exist_url = get_url(*query_params, get_conn())
     if not validate(url):
         flash_url_errors(url)
         abort(422, {'url': url})
@@ -75,7 +74,8 @@ def add_url():
 
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
-    url = get_url("id=%s", url_id, get_conn())
+    query_params = ("id=%s", (url_id,))
+    url = get_url(*query_params, get_conn())
     request = run_request(url['name'])
     if request:
         check = {'url_id': url_id, 'created_at': date.today(),
