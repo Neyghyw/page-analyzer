@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import requests
 from bs4 import BeautifulSoup
 from flask import flash
@@ -23,7 +25,7 @@ def flash_url_errors(url: str):
         flash('error', 'Некорректный URL')
 
 
-def parse_markup(markup):
+def parse_html(markup):
     soup = BeautifulSoup(markup, 'html.parser')
     parts = dict()
     meta = soup.head.find('meta', {'name': 'description'})
@@ -34,3 +36,9 @@ def parse_markup(markup):
     if soup.h1:
         parts['h1'] = soup.h1.text
     return parts
+
+
+def cut_url(url):
+    parts = urlparse(url)
+    formatted_url = f'{parts.scheme}://{parts.netloc}'
+    return formatted_url
