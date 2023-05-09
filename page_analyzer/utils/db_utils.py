@@ -42,7 +42,7 @@ def insert_url(url, created_at, connection):
 
 def insert_check(check, connection):
     fields = str.join(', ', check.keys())
-    placeholders = '%s,' * len(check.values())
+    placeholders = '%s,' * len(check)
     placeholders = placeholders[:-1]
     query_str = f"INSERT INTO url_checks({fields}) " \
                 f"VALUES({placeholders}) " \
