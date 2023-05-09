@@ -3,8 +3,8 @@
 <head>
 </head>
 <body>
-        {% if flash_messages %}
-        {% for message, type in flash_messages %}
+        {% if flashes %}
+        {% for message, type in flashes %}
             {% if type == 'success' %}
                 <div class="alert alert-success" role="alert">{{message}}</div>
             {% endif %}
