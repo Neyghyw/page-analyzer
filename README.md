@@ -12,6 +12,29 @@ This web app analysis the web page for its SEO affordability.
 
 The app is available by link:
     https://flask-secretkey.up.railway.app/
+    
+# Local usage
+For personal usage you need to create a special .env file, that contains environment variables.
+
+Creating:
+```ch
+touch .env
+```
+
+Example: 
+```ch
+SECRET_KEY=8c42c2ea363a9082740b523d1a302e6a3ad3387d3491b8ffb66da
+DATABASE_URL=postgresql://user:password@connect_url/database
+```
+
+# Makefile
+Into makefile you can see next commands:
+* debug - start local wsgi-server, that use debug mode. Debug mode restart automatically when you edit a code.
+* start - start command for production deploy.
+* dev - start local wsgi-server.
+* lint - this command will check project with flake8 linter.
+* install - this command will install poetry into project.
+
 
 # Tech stack
 
