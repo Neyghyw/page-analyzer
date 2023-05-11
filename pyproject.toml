@@ -4,6 +4,13 @@ version = "0.1.0"
 description = "This application is a page analyzer. Made as part of the Python Back End Development course."
 authors = ["nickolay_kuzmin <nickolay.kuzmin2001@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/Neyghyw/python-project-83.git"
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Natural Language :: Russian",
+    "Programming Language :: Python"
+]
 packages = [{include = "page_analyzer"}]
 
 [tool.poetry.dependencies]
