@@ -26,7 +26,7 @@ def get_urls(conn):
 
 
 def get_checks(conn, url_id):
-    query_str = 'SELECT * FROM url_checks WHERE url_id=%s;'
+    query_str = "SELECT * FROM url_checks WHERE url_id=%s"
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (url_id,))
         checks = cursor.fetchall()
@@ -51,10 +51,8 @@ def get_url_by_name(conn, name):
 
 
 def insert_url(conn, url, created_at):
-    query_str = '''
-                INSERT INTO urls(name, created_at)
-                VALUES(%s, %s) RETURNING *;
-                '''
+    query_str = "INSERT INTO urls(name, created_at) VALUES(%s, %s) RETURNING *;"
+
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (url, created_at,))
         new_url = cursor.fetchone()
@@ -62,12 +60,19 @@ def insert_url(conn, url, created_at):
 
 
 def insert_check(conn, check):
-    fields = str.join(', ', check.keys())
-    placeholders = ('%s,' * len(check))[:-1]
-    query_str = (f'INSERT INTO url_checks({fields}) '
-                 f'VALUES({placeholders}) RETURNING *')
+    values = (
+        check.get('url_id'),
+        check.get('created_at'),
+        check.get('status_code'),
+        check.get('h1'),
+        check.get('description'),
+        check.get('title')
+    )
+    query_str = ("INSERT INTO url_checks(url_id, created_at, "
+                 "status_code, h1, description, title) "
+                 "VALUES(%s,%s,%s,%s,%s,%s) RETURNING *;")
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
-        cursor.execute(query_str, (*check.values(),))
+        cursor.execute(query_str, (*values,))
         new_check = cursor.fetchone()
     return new_check
 
