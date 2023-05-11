@@ -1,12 +1,10 @@
 import os
-import psycopg2
+from page_analyzer import db
 from dotenv import load_dotenv
-from datetime import date
+from datetime import datetime
 from flask import Flask, g, get_flashed_messages, flash
 from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
-from .utils.db_utils import get_urls, get_url, insert_url
-from .utils.db_utils import get_checks, insert_check
 from .utils.url_utils import flash_url_errors, run_request, parse_html, cut_url
 
 load_dotenv()
@@ -19,15 +17,14 @@ app.config.update(SECRET_KEY=SECRET_KEY,
 
 def get_connection():
     if not hasattr(g, 'db_connect'):
-        g.db_connect = psycopg2.connect(DATABASE_URL)
-        g.db_connect.autocommit = True
+        g.db_connect = db.create_connection(DATABASE_URL)
     return g.db_connect
 
 
 @app.teardown_appcontext
 def close_conn(error):
     if hasattr(g, 'db_connect'):
-        g.db_connect.close()
+        db.close_connection(g.db_connect)
 
 
 @app.route('/')
@@ -39,7 +36,7 @@ def index():
 def urls():
     conn = get_connection()
     messages = get_flashed_messages(with_categories=True)
-    urls = get_urls(conn)
+    urls = db.get_urls(conn)
     return render_template('urls.html', urls=urls, flashes=messages)
 
 
@@ -47,8 +44,8 @@ def urls():
 def url(url_id):
     conn = get_connection()
     messages = get_flashed_messages(with_categories=True)
-    url = get_url("id", url_id, conn)
-    checks = get_checks(url_id, conn)
+    url = db.get_url(conn, url_id)
+    checks = db.get_checks(conn, url_id)
     return render_template('url.html', url=url, checks=checks, flashes=messages)
 
 
@@ -57,7 +54,7 @@ def add_url():
     conn = get_connection()
     url = request.form.get('url')
     short_url = cut_url(url)
-    exist_url = get_url("name", short_url, conn)
+    exist_url = db.get_url_by_name(conn, short_url)
     if not validate(url):
         flash_url_errors(url)
         abort(422, {'url': url})
@@ -65,7 +62,7 @@ def add_url():
         flash('info', 'Страница уже существует')
         url_id = exist_url['id']
     else:
-        new_url = insert_url(short_url, date.today(), conn)
+        new_url = db.insert_url(conn, short_url, datetime.today())
         url_id = new_url['id']
         flash('success', 'Страница успешно добавлена')
     return redirect(url_for("url", url_id=url_id))
@@ -74,15 +71,15 @@ def add_url():
 @app.post('/urls/<int:url_id>/checks')
 def add_check(url_id):
     conn = get_connection()
-    url = get_url("id", url_id, conn)
+    url = db.get_url(conn, url_id)
     request = run_request(url['name'])
     if request:
         check = {'url_id': url_id,
-                 'created_at': date.today(),
+                 'created_at': datetime.now(),
                  'status_code': request.status_code,
                  **parse_html(request.text)
                  }
-        insert_check(check, conn)
+        db.insert_check(conn, check)
         flash('success', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))
 
