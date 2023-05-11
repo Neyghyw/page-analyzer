@@ -14,13 +14,12 @@ def close_connection(connection):
 
 def get_urls(conn):
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
-        cursor.execute('''
-                SELECT urls.id, urls.name, 
-                MAX(url_checks.created_at) as last_check, 
-                MIN(url_checks.status_code) as status_code 
-                FROM urls INNER JOIN url_checks 
-                ON urls.id = url_checks.url_id GROUP BY (urls.id);
-                ''')
+        cursor.execute("SELECT urls.id, urls.name, "
+                       "MAX(url_checks.created_at) as last_check, "
+                       "MIN(url_checks.status_code) as status_code "
+                       "FROM urls INNER JOIN url_checks "
+                       "ON urls.id = url_checks.url_id "
+                       "GROUP BY (urls.id);")
         urls = cursor.fetchall()
     urls = [handle_none_values(url) for url in urls]
     return urls
@@ -36,7 +35,7 @@ def get_checks(conn, url_id):
 
 
 def get_url(conn, id):
-    query_str = f"SELECT * FROM urls WHERE (id=%s);"
+    query_str = "SELECT * FROM urls WHERE (id=%s);"
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (id,))
         url = cursor.fetchone()
@@ -44,7 +43,7 @@ def get_url(conn, id):
 
 
 def get_url_by_name(conn, name):
-    query_str = f"SELECT * FROM urls WHERE (name=%s);"
+    query_str = "SELECT * FROM urls WHERE (name=%s);"
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (name,))
         url = cursor.fetchone()
@@ -65,11 +64,8 @@ def insert_url(conn, url, created_at):
 def insert_check(conn, check):
     fields = str.join(', ', check.keys())
     placeholders = ('%s,' * len(check))[:-1]
-    query_str = f'''
-                INSERT INTO url_checks({fields}) 
-                VALUES({placeholders}) 
-                RETURNING *;
-                '''
+    query_str = (f'INSERT INTO url_checks({fields}) '
+                 f'VALUES({placeholders}) RETURNING *')
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (*check.values(),))
         new_check = cursor.fetchone()
