@@ -1,5 +1,5 @@
 from urllib.parse import urlparse
-
+from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 from flask import flash
@@ -9,9 +9,9 @@ URL_LENGTH = 255
 
 def run_request(url):
     try:
-        request = requests.get(url)
-        request.raise_for_status()
-        return request
+        response = requests.get(url)
+        response.raise_for_status()
+        return response
     except requests.exceptions.RequestException:
         flash('error', 'Произошла ошибка при проверке')
 
@@ -36,6 +36,15 @@ def parse_html(markup):
     if soup.h1:
         parts['h1'] = soup.h1.text
     return parts
+
+
+def build_check(url_id, response):
+    check = {'url_id': url_id,
+             'created_at': datetime.now(),
+             'status_code': response.status_code,
+             **parse_html(response.text)
+             }
+    return check
 
 
 def cut_url(url):

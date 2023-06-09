@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2 import extras
+from datetime import datetime
 
 
 def create_connection(connection_str):
@@ -35,7 +36,7 @@ def get_checks(conn, url_id):
 
 
 def get_url(conn, id):
-    query_str = "SELECT * FROM urls WHERE (id=%s);"
+    query_str = "SELECT * FROM urls WHERE id=%s;"
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (id,))
         url = cursor.fetchone()
@@ -43,18 +44,18 @@ def get_url(conn, id):
 
 
 def get_url_by_name(conn, name):
-    query_str = "SELECT * FROM urls WHERE (name=%s);"
+    query_str = "SELECT * FROM urls WHERE name=%s;"
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (name,))
         url = cursor.fetchone()
     return url
 
 
-def insert_url(conn, url, created_at):
+def insert_url(conn, url):
     query_str = "INSERT INTO urls(name, created_at) VALUES(%s, %s) RETURNING *;"
 
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
-        cursor.execute(query_str, (url, created_at,))
+        cursor.execute(query_str, (url, datetime.now(),))
         new_url = cursor.fetchone()
     return new_url
 
