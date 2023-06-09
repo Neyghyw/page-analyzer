@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from dotenv import load_dotenv
 from flask import Flask, g, get_flashed_messages, flash
