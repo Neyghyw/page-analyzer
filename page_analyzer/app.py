@@ -1,11 +1,13 @@
 import os
-from page_analyzer import db
+
 from dotenv import load_dotenv
-from datetime import datetime
 from flask import Flask, g, get_flashed_messages, flash
 from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
-from .utils.url_utils import flash_url_errors, run_request, parse_html, cut_url
+
+from page_analyzer import db
+from page_analyzer.utils.url_utils import flash_url_errors, \
+    run_request, cut_url, build_check
 
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -62,7 +64,7 @@ def add_url():
         flash('info', 'Страница уже существует')
         url_id = exist_url['id']
     else:
-        new_url = db.insert_url(conn, short_url, datetime.today())
+        new_url = db.insert_url(conn, short_url)
         url_id = new_url['id']
         flash('success', 'Страница успешно добавлена')
     return redirect(url_for("url", url_id=url_id))
@@ -72,13 +74,9 @@ def add_url():
 def add_check(url_id):
     conn = get_connection()
     url = db.get_url(conn, url_id)
-    request = run_request(url['name'])
-    if request:
-        check = {'url_id': url_id,
-                 'created_at': datetime.now(),
-                 'status_code': request.status_code,
-                 **parse_html(request.text)
-                 }
+    response = run_request(url['name'])
+    if response:
+        check = build_check(url_id, response)
         db.insert_check(conn, check)
         flash('success', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))
