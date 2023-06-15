@@ -47,6 +47,8 @@ def url(url_id):
     conn = get_connection()
     messages = get_flashed_messages(with_categories=True)
     url = db.get_url(conn, url_id)
+    if not url:
+        abort(404)
     checks = db.get_checks(conn, url_id)
     return render_template('url.html', url=url, checks=checks, flashes=messages)
 
