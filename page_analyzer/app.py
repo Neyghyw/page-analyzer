@@ -6,7 +6,7 @@ from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
 
 from page_analyzer import db
-from page_analyzer.utils.url_utils import flash_url_errors, \
+from page_analyzer.utils.url_utils import get_url_errors, \
     run_request, cut_url, build_check
 
 load_dotenv()
@@ -47,6 +47,8 @@ def url(url_id):
     conn = get_connection()
     messages = get_flashed_messages(with_categories=True)
     url = db.get_url(conn, url_id)
+    if not url:
+        abort(404)
     checks = db.get_checks(conn, url_id)
     return render_template('url.html', url=url, checks=checks, flashes=messages)
 
@@ -58,7 +60,7 @@ def add_url():
     short_url = cut_url(url)
     exist_url = db.get_url_by_name(conn, short_url)
     if not validate(url):
-        flash_url_errors(url)
+        [flash('error', error_text) for error_text in get_url_errors(url)]
         abort(422, {'url': url})
     if exist_url:
         flash('info', 'Страница уже существует')
@@ -79,6 +81,8 @@ def add_check(url_id):
         check = build_check(url_id, response)
         db.insert_check(conn, check)
         flash('success', 'Страница успешно проверена')
+    else:
+        flash('error', 'Произошла ошибка при проверке')
     return redirect(url_for("url", url_id=url_id))
 
 
@@ -92,12 +96,10 @@ def unprocessable_entity(error):
 @app.errorhandler(404)
 def page_not_found(error):
     messages = get_flashed_messages(with_categories=True)
-    url = error.description['url']
-    return render_template('index.html', flashes=messages, url=url), 422
+    return render_template('index.html', flashes=messages), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(error):
     messages = get_flashed_messages(with_categories=True)
-    url = error.description['url']
-    return render_template('index.html', flashes=messages, url=url), 422
+    return render_template('index.html', flashes=messages), 500

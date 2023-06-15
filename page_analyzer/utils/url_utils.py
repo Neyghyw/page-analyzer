@@ -2,7 +2,6 @@ from urllib.parse import urlparse
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
-from flask import flash
 
 URL_LENGTH = 255
 
@@ -13,16 +12,18 @@ def run_request(url):
         response.raise_for_status()
         return response
     except requests.exceptions.RequestException:
-        flash('error', 'Произошла ошибка при проверке')
+        return None
 
 
-def flash_url_errors(url: str):
+def get_url_errors(url: str):
+    url_errors = []
     if not url:
-        flash('error', 'URL обязателен.')
+        url_errors.append('URL обязателен.')
     elif len(url) > URL_LENGTH:
-        flash('error', f'Длина URL должна быть не более {URL_LENGTH} символов.')
+        url_errors.append(f'Ограничение длины URL - {URL_LENGTH} символов.')
     else:
-        flash('error', 'Некорректный URL')
+        url_errors.append('Некорректный URL')
+    return url_errors
 
 
 def parse_html(markup):
