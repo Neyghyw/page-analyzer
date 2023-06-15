@@ -83,7 +83,6 @@ def add_check(url_id):
         flash('success', 'Страница успешно проверена')
     else:
         flash('error', 'Произошла ошибка при проверке')
-        abort(500)
     return redirect(url_for("url", url_id=url_id))
 
 
