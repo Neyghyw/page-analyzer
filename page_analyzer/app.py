@@ -6,7 +6,7 @@ from flask import render_template, redirect, request, url_for, abort
 from validators.url import url as validate
 
 from page_analyzer import db
-from page_analyzer.utils.url_utils import flash_url_errors, \
+from page_analyzer.utils.url_utils import get_url_errors, \
     run_request, cut_url, build_check
 
 load_dotenv()
@@ -58,7 +58,7 @@ def add_url():
     short_url = cut_url(url)
     exist_url = db.get_url_by_name(conn, short_url)
     if not validate(url):
-        flash_url_errors(url)
+        [flash('error', error_text) for error_text in get_url_errors(url)]
         abort(422, {'url': url})
     if exist_url:
         flash('info', 'Страница уже существует')
@@ -79,6 +79,8 @@ def add_check(url_id):
         check = build_check(url_id, response)
         db.insert_check(conn, check)
         flash('success', 'Страница успешно проверена')
+    else:
+        flash('error', 'Страница успешно проверена')
     return redirect(url_for("url", url_id=url_id))
 
 
