@@ -80,7 +80,7 @@ def add_check(url_id):
         db.insert_check(conn, check)
         flash('success', 'Страница успешно проверена')
     else:
-        flash('error', 'Страница успешно проверена')
+        flash('error', 'Произошла ошибка при проверке')
     return redirect(url_for("url", url_id=url_id))
 
 
