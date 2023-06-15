@@ -81,6 +81,7 @@ def add_check(url_id):
         flash('success', 'Страница успешно проверена')
     else:
         flash('error', 'Произошла ошибка при проверке')
+        abort(500)
     return redirect(url_for("url", url_id=url_id))
 
 
@@ -94,12 +95,10 @@ def unprocessable_entity(error):
 @app.errorhandler(404)
 def page_not_found(error):
     messages = get_flashed_messages(with_categories=True)
-    url = error.description['url']
-    return render_template('index.html', flashes=messages, url=url), 422
+    return render_template('index.html', flashes=messages), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(error):
     messages = get_flashed_messages(with_categories=True)
-    url = error.description['url']
-    return render_template('index.html', flashes=messages, url=url), 422
+    return render_template('index.html', flashes=messages), 500
