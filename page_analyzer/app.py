@@ -87,3 +87,17 @@ def unprocessable_entity(error):
     messages = get_flashed_messages(with_categories=True)
     url = error.description['url']
     return render_template('index.html', flashes=messages, url=url), 422
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    messages = get_flashed_messages(with_categories=True)
+    url = error.description['url']
+    return render_template('index.html', flashes=messages, url=url), 422
+
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    messages = get_flashed_messages(with_categories=True)
+    url = error.description['url']
+    return render_template('index.html', flashes=messages, url=url), 422

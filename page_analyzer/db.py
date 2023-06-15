@@ -22,7 +22,6 @@ def get_urls(conn):
                        "ON urls.id = url_checks.url_id "
                        "GROUP BY (urls.id);")
         urls = cursor.fetchall()
-    urls = [handle_none_values(url) for url in urls]
     return urls
 
 
@@ -31,7 +30,6 @@ def get_checks(conn, url_id):
     with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
         cursor.execute(query_str, (url_id,))
         checks = cursor.fetchall()
-    checks = [handle_none_values(check) for check in checks]
     return checks
 
 
@@ -76,10 +74,3 @@ def insert_check(conn, check):
         cursor.execute(query_str, (*values,))
         new_check = cursor.fetchone()
     return new_check
-
-
-def handle_none_values(row):
-    for key, value in row.items():
-        if value is None:
-            row[key] = ''
-    return row

@@ -1,22 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-</head>
-<body>
-        {% if flashes %}
-        {% for message, type in flashes %}
-            {% if type == 'success' %}
-                <div class="alert alert-success" role="alert">{{message}}</div>
-            {% endif %}
-
-            {% if type == 'error' %}
-                <div class="alert alert-danger" role="alert">{{message}}</div>
-            {% endif %}
-
-            {% if type == 'info' %}
-                <div class="alert alert-info" role="alert">{{message}}</div>
-            {% endif %}
-        {% endfor %}
+{% if flashes %}
+{% for message, type in flashes %}
+    {% if type == 'success' %}
+        <div class="alert alert-success" role="alert">{{message}}</div>
     {% endif %}
-</body>
-</html>
+
+    {% if type == 'error' %}
+        <div class="alert alert-danger" role="alert">{{message}}</div>
+    {% endif %}
+
+    {% if type == 'info' %}
+        <div class="alert alert-info" role="alert">{{message}}</div>
+    {% endif %}
+{% endfor %}
+{% endif %}
